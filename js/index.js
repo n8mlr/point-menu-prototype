@@ -35,13 +35,15 @@ class PointMenu {
 
         // who has the most space?
         // we want the best case of a) preferred quadrant b) no clipping
-        
+        let availablePixels = {}
 
         // will the menu fit in the north quadrant?
         availablePixels.north = ptOrigin.y - boundingRect.height + originOffset;
         availablePixels.west = ptOrigin.x - boundingRect.width + originOffset;
         availablePixels.east = window.innerWidth - ptOrigin.x - boundingRect.width - originOffset;
         availablePixels.south = window.innerHeight - ptOrigin.y - boundingRect.height - originOffset;
+
+
 
         // place the menu in the first available quadrant where no clipping shall occur
 
