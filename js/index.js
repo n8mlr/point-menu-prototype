@@ -8,11 +8,12 @@ class Point {
 }
 
 class Rectangle {
-    constructor(x, y, width, height) {
+    constructor(x, y, width, height, label) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.label = label;
     }
 
     /**
@@ -34,6 +35,7 @@ class PointMenu {
         this.elementId = elementId;
         this.element = document.getElementById(elementId);
         this.dot = document.querySelector("#originPoint");
+        this.stem = document.querySelector("#stem");
         this.stemLength = 80; // pixel length of connecting stem
         this.hide();
     }
@@ -57,29 +59,49 @@ class PointMenu {
     openAtPoint(pt) {
         this.show();
         let rectMenu = this.element.getBoundingClientRect();
-        let ptMenuLocation = this.getBestLayout(pt, rectMenu, this.stemLength);
+        let layout = this.getBestLayout(pt, rectMenu, this.stemLength);
+
+        let ptMenuLocation = layout[0];
+        let stemDirection = layout[1];
         PointMenu.translate(this.element, ptMenuLocation);
 
-        // Move the stem origin to the location
+        // Move the stem origin to the location tapped
         let ptDot = PointMenu.globalToLocal(pt, ptMenuLocation);
         PointMenu.translate(this.dot, ptDot);
 
-        console.log("ptDot", ptDot);
 
 
-        var ptTerminal = new Point();
-        ptTerminal.x = (ptDot.x < 0) ? ptMenuLocation.x - this.stemLength : ptDot.x - this.stemLength;
-        ptTerminal.y = (ptDot.y < 0) ? ptMenuLocation.y : ptDot.y;
 
-        // if north or south orientation, x is equal to half the width of the
+        // This code sucks...what we really need is matrix operations
 
-        console.log("ptTerminal", PointMenu.globalToLocal(ptTerminal, ptDot));
+        // if north or south orientation, rotate the stem by 90 deg
+        if (stemDirection === "N" || stemDirection === "S") {
+            // x is offset by negative half width
+            let x = rectMenu.width / 2 - this.stemLength / 2 - 1;
+            let y = (ptDot.y < 0) ? ptDot.y + this.stemLength/2 : rectMenu.height + this.stemLength / 2;
+
+            this.stem.style.transform = `translate(${x}px,${y}px) rotate(90deg)`;
+        } else {
+            let x = (ptDot.x < 0) ? ptDot.x : rectMenu.width;
+            PointMenu.translate(this.stem, new Point(x, rectMenu.height / 2 - 1));
+        }
+
+
+        //console.log("ptTerminal", PointMenu.globalToLocal(ptTerminal, ptDot));
 
         // Draw the stem connecting the user's tap location to the menu
     }
 
+    orientStem(ptOrigin, rectMenu, direction) {
+        
+    }
+
     static translate(element, point) {
         element.style.transform = `translate(${point.x}px, ${point.y}px)`;
+    }
+
+    static rotate(element, degrees) {
+        element.style.transform = `rotate(${degrees}deg)`;
     }
 
     /**
@@ -97,7 +119,7 @@ class PointMenu {
      * @param {Point} ptOrigin - the screen coordinates where the user tapped or clicked
      * @param {Rectangle} boundingRect - the rectangular shape to be rendered
      * @param {int} originOffset - the amount of padding to add between the menu and the interaction point
-     * @return {Point}
+     * @return [{point}, {string}] - an array containing the coordinate and cardinal direction of menu
      */
     getBestLayout(ptOrigin, boundingRect, originOffset) {
         let rectLayouts = [];
@@ -110,25 +132,29 @@ class PointMenu {
         rectLayouts.push(new Rectangle(ptOrigin.x - (boundingRect.width / 2),
             ptOrigin.y + originOffset,
             boundingRect.width,
-            boundingRect.height));
+            boundingRect.height,
+            "S"));
 
         // East
         rectLayouts.push(new Rectangle(ptOrigin.x + originOffset,
             ptOrigin.y - (boundingRect.height / 2),
             boundingRect.width,
-            boundingRect.height));
+            boundingRect.height,
+            "E"));
 
         // West
         rectLayouts.push(new Rectangle(ptOrigin.x - boundingRect.width - originOffset,
             ptOrigin.y - (boundingRect.height / 2),
             boundingRect.width,
-            boundingRect.height));
+            boundingRect.height,
+            "W"));
 
         // North
         rectLayouts.push(new Rectangle(ptOrigin.x - (boundingRect.width / 2),
             ptOrigin.y - boundingRect.height - originOffset,
             boundingRect.width,
-            boundingRect.height));
+            boundingRect.height,
+            "N"));
 
         // Find the rectangle whose area of intersection with the screen is largest
         let rectScreen = new Rectangle(0, 0, window.innerWidth, window.innerHeight);
@@ -142,7 +168,7 @@ class PointMenu {
             }
         }
 
-        return new Point(rectLargestArea[0].x, rectLargestArea[0].y);
+        return [new Point(rectLargestArea[0].x, rectLargestArea[0].y), rectLargestArea[0].label];
     }
 }
 
