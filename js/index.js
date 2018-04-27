@@ -33,31 +33,40 @@ class PointMenu {
     constructor(elementId) {
         this.elementId = elementId;
         this.element = document.getElementById(elementId);
-        this.origin = {};
         this.stemLength = 80; // pixel length of connecting stem
+        this.hide();
     }
 
     set coordinates(point) {
         this.element.style.transform = `translate(${point.x}px, ${point.y}px)`;
     }
 
+    hide() {
+        this.element.style.display = "none";
+    }
+
+    show() {
+        this.element.style.display = "block";
+    }
+
     openAtPoint(pt) {
-        this.origin = pt;
-        this.calcAvailableQuadrant(pt,
+        this.show();
+        let ptMenuLocation = this.getBestLayout(pt,
             this.element.getBoundingClientRect(),
             this.stemLength);
+
+        this.coordinates = ptMenuLocation;
     }
 
     /**
      * Determines where the point menu should be rendered given the size of the menu and the origin of click
      */
-    calcAvailableQuadrant(ptOrigin, boundingRect, originOffset) {
+    getBestLayout(ptOrigin, boundingRect, originOffset) {
         let rectLayouts = [];
 
         // Calculate four possible regions for placement. The preferred order for usability on touchscreen
         // devices is north, west, east, and south. Because the algorithm below will optimize for the last
         // item added to rectLayouts[], the order of insertion into the array is important.
-
 
         // South
         rectLayouts.push(new Rectangle(ptOrigin.x - (boundingRect.width / 2),
@@ -70,7 +79,7 @@ class PointMenu {
             ptOrigin.y - (boundingRect.height / 2),
             boundingRect.width,
             boundingRect.height));
-        
+
         // West
         rectLayouts.push(new Rectangle(ptOrigin.x - boundingRect.width - originOffset,
             ptOrigin.y - (boundingRect.height / 2),
@@ -88,22 +97,14 @@ class PointMenu {
         let rectLargestArea = [null, 0];
 
         for (var i = rectLayouts.length - 1; i >= 0; i--) {
-             let area = rectScreen.calcIntersectArea(rectLayouts[i]);
-             if (area > rectLargestArea[1]) {
+            let area = rectScreen.calcIntersectArea(rectLayouts[i]);
+            if (area > rectLargestArea[1]) {
                 rectLargestArea[0] = rectLayouts[i];
                 rectLargestArea[1] = area;
-             }
+            }
         }
 
-
-        this.coordinates = new Point(rectLargestArea[0].x, rectLargestArea[0].y);
-    }
-
-    /**
-     * Returns true when rectangle B fully subsumes rectangle A
-     */
-    doesRectContainRect(rectA, rectB) {
-
+        return new Point(rectLargestArea[0].x, rectLargestArea[0].y);
     }
 }
 
