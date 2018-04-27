@@ -10,6 +10,7 @@
     text-align: left;
     background-color: #fafcff;
     border-radius: 16px;
+    box-shadow: 0 20px 12px 0 rgba(0,0,0,0.38);
 }
 
 .pmTitle {
