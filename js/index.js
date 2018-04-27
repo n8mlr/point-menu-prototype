@@ -90,22 +90,7 @@ class PointMenu {
     close() {
         this.isOpen = false;
         TweenMax.killAll();
-        //this.hide();
-        TweenMax.to(this.element, 0.25, { opacity: 0, ease: Power4.easeOut});
-        /*
-
-        let ptMenuLocation = PointMenu.getTranslation(this.element);
-        console.log(ptMenuLocation);
-
-        let pMenu = {
-            aOpacity: 1,
-            zOpacity: 0,
-            aScale: 1,
-            zScale: 0.5
-        }
-
-        
-        */
+        TweenMax.to(this.element, 0.2, { opacity: 0, ease: Power4.easeOut});
     }
 
     /**
