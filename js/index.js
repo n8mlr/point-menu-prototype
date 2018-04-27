@@ -58,42 +58,44 @@ class PointMenu {
      */
     openAtPoint(pt) {
         this.show();
+
         let rectMenu = this.element.getBoundingClientRect();
         let layout = this.getBestLayout(pt, rectMenu, this.stemLength);
 
+        // Move the menu to the most visible location
         let ptMenuLocation = layout[0];
-        let stemDirection = layout[1];
+        let strStemDirection = layout[1];
         PointMenu.translate(this.element, ptMenuLocation);
 
-        // Move the stem origin to the location tapped
+        // Move the dot to the location user tapped
         let ptDot = PointMenu.globalToLocal(pt, ptMenuLocation);
         PointMenu.translate(this.dot, ptDot);
 
+        // Orient the stem according to layout
+        this.orientStem(ptDot, rectMenu, strStemDirection);
 
+        // Animate the intro
+        this.animateIn(strStemDirection);
+    }
 
+    /**
+     * Moves the stem to the correct location. This method is brittle and hacky due to my use of CSS
+     * tranforms. A better method might use matrix transforms or drawing the line via a canvas
+     */
+    orientStem(ptOrigin, rectMenu, direction) {
+        let x,y;
 
-        // This code sucks...what we really need is matrix operations
-
-        // if north or south orientation, rotate the stem by 90 deg
-        if (stemDirection === "N" || stemDirection === "S") {
-            // x is offset by negative half width
-            let x = rectMenu.width / 2 - this.stemLength / 2 - 1;
-            let y = (ptDot.y < 0) ? ptDot.y + this.stemLength/2 : rectMenu.height + this.stemLength / 2;
+        if (direction === "N" || direction === "S") {
+            // x is offset by half the width of the menu
+            x = rectMenu.width / 2 - this.stemLength / 2 - 1;
+            y = (ptOrigin.y < 0) ? ptOrigin.y + this.stemLength / 2 : rectMenu.height + this.stemLength / 2;
 
             this.stem.style.transform = `translate(${x}px,${y}px) rotate(90deg)`;
         } else {
-            let x = (ptDot.x < 0) ? ptDot.x : rectMenu.width;
+            // y is offset by half the height of the menu
+            x = (ptOrigin.x < 0) ? ptOrigin.x : rectMenu.width;
             PointMenu.translate(this.stem, new Point(x, rectMenu.height / 2 - 1));
         }
-
-
-        //console.log("ptTerminal", PointMenu.globalToLocal(ptTerminal, ptDot));
-
-        // Draw the stem connecting the user's tap location to the menu
-    }
-
-    orientStem(ptOrigin, rectMenu, direction) {
-        
     }
 
     static translate(element, point) {
@@ -111,6 +113,10 @@ class PointMenu {
         let dx = ptGlobal.x - ptLocal.x;
         let dy = ptGlobal.y - ptLocal.y;
         return new Point(dx, dy);
+    }
+
+    animateIn(direction) {
+        console.log("Animate", direction);
     }
 
     /**
