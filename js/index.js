@@ -34,9 +34,16 @@ class PointMenu {
     constructor(elementId) {
         this.elementId = elementId;
         this.element = document.getElementById(elementId);
+        this.menu = document.querySelector("#pmMenu");
         this.dot = document.querySelector("#originPoint");
         this.stem = document.querySelector("#stem");
-        this.stemLength = 80; // pixel length of connecting stem
+
+        // pixel length of connecting stem
+        this.stemLength = 80;
+
+        // the distance the menu will travel when animating in
+        this.driftLength = 128;
+
         this.hide();
     }
 
@@ -83,7 +90,7 @@ class PointMenu {
      * tranforms. A better method might use matrix transforms or drawing the line via a canvas
      */
     orientStem(ptOrigin, rectMenu, direction) {
-        let x,y;
+        let x, y;
 
         if (direction === "N" || direction === "S") {
             // x is offset by half the width of the menu
@@ -116,7 +123,56 @@ class PointMenu {
     }
 
     animateIn(direction) {
-        console.log("Animate", direction);
+
+        /*
+        -----------------------
+        Animate the menu shape
+        -----------------------
+         */
+
+        let pMenu = {
+            aOpacity: 0,
+            zOpacity: 1,
+            aScale: 0.4,
+            zScale: 1,
+            aX: 0,
+            zX: 0,
+            aY: 0,
+            zY: 0
+        }
+
+        if (direction === "E" || direction === "W") {
+            pMenu.aX = (direction === "E") ? -this.driftLength : this.driftLength;
+        } else {
+            pMenu.aY = (direction === "N") ? this.driftLength : -this.driftLength;
+        }
+
+        TweenMax.fromTo(this.menu,
+            0.4, { y: pMenu.aY, x: pMenu.aX, scale: pMenu.aScale }, { y: pMenu.zY, x: pMenu.zX, scale: pMenu.zScale, ease: Power4.easeOut });
+
+
+        /*
+        --------------------------------------
+        Animate the dot where the user tapped
+        --------------------------------------
+         */
+
+        // get the current transform applied to the dot, otherwise tweenmax will ovewrite X and Y values
+        let match = RegExp(/(-?\d+)px,\s?(-?\d+)px/, 'g').exec(this.dot.style.transform);
+        let ptDot = new Point(match[1], match[2]);
+
+        TweenMax.fromTo(this.dot,
+            0.25, { x: ptDot.x, y: ptDot.y, scale: 0, opacity: 1 }, { x: ptDot.x, y: ptDot.y, scale: 8, opacity: 0.5 });
+        TweenMax.to(this.dot,
+            0.25, { scale: 1, opacity: 1, delay: 0.25 });
+
+        /*
+        --------------------------------------
+        Animate the stem
+        --------------------------------------
+         */
+
+        TweenMax.fromTo(this.stem, 0.2, { opacity: 0 }, { opacity: 1 });
     }
 
     /**
