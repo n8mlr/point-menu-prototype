@@ -37,6 +37,7 @@ class PointMenu {
         this.menu = document.querySelector("#pmMenu");
         this.dot = document.querySelector("#originPoint");
         this.stem = document.querySelector("#stem");
+        this.isOpen = false;
 
         // pixel length of connecting stem
         this.stemLength = 80;
@@ -64,6 +65,7 @@ class PointMenu {
      * @param {Point} pt
      */
     openAtPoint(pt) {
+        this.isOpen = true;
         this.show();
 
         let rectMenu = this.element.getBoundingClientRect();
@@ -83,6 +85,27 @@ class PointMenu {
 
         // Animate the intro
         this.animateIn(strStemDirection);
+    }
+
+    close() {
+        this.isOpen = false;
+        TweenMax.killAll();
+        //this.hide();
+        TweenMax.to(this.element, 0.25, { opacity: 0, ease: Power4.easeOut});
+        /*
+
+        let ptMenuLocation = PointMenu.getTranslation(this.element);
+        console.log(ptMenuLocation);
+
+        let pMenu = {
+            aOpacity: 1,
+            zOpacity: 0,
+            aScale: 1,
+            zScale: 0.5
+        }
+
+        
+        */
     }
 
     /**
@@ -122,7 +145,19 @@ class PointMenu {
         return new Point(dx, dy);
     }
 
+    /**
+     * Returns the amount of translation applied to an element
+     *
+     * @return {Point}
+     */
+    static getTranslation(element) {
+        let match = RegExp(/translate\((-?\d+)px,\s(-?\d+)px\)/, 'g').exec(element.style.transform);
+        return new Point(match[1], match[2]);
+    }
+
     animateIn(direction) {
+        TweenMax.killAll();
+        this.element.style.opacity = 1;
 
         /*
         -----------------------
@@ -148,8 +183,7 @@ class PointMenu {
         }
 
         TweenMax.fromTo(this.menu,
-            0.4, { y: pMenu.aY, x: pMenu.aX, scale: pMenu.aScale }, { y: pMenu.zY, x: pMenu.zX, scale: pMenu.zScale, ease: Power4.easeOut });
-
+            0.2, { y: pMenu.aY, x: pMenu.aX, scale: pMenu.aScale }, { y: pMenu.zY, x: pMenu.zX, scale: pMenu.zScale, ease: Power2.easeOut });
 
         /*
         --------------------------------------
@@ -157,9 +191,7 @@ class PointMenu {
         --------------------------------------
          */
 
-        // get the current transform applied to the dot, otherwise tweenmax will ovewrite X and Y values
-        let match = RegExp(/(-?\d+)px,\s?(-?\d+)px/, 'g').exec(this.dot.style.transform);
-        let ptDot = new Point(match[1], match[2]);
+        let ptDot = PointMenu.getTranslation(this.dot);
 
         TweenMax.fromTo(this.dot,
             0.25, { x: ptDot.x, y: ptDot.y, scale: 0, opacity: 1 }, { x: ptDot.x, y: ptDot.y, scale: 8, opacity: 0.5 });
@@ -236,14 +268,17 @@ class PointMenu {
 
 
 function onMapClick(e) {
-    pm.openAtPoint(new Point(e.clientX, e.clientY));
+    if (!pm.isOpen) {
+        pm.openAtPoint(new Point(e.clientX, e.clientY));
+    } else {
+        pm.close();
+    }
+
 }
 
 
 
 // Run
 let pm = new PointMenu("pm");
-
-
 let container = document.getElementById("container");
 addEventListener("click", onMapClick);
