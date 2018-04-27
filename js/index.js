@@ -33,6 +33,7 @@ class PointMenu {
     constructor(elementId) {
         this.elementId = elementId;
         this.element = document.getElementById(elementId);
+        this.dot = document.querySelector("#originPoint");
         this.stemLength = 80; // pixel length of connecting stem
         this.hide();
     }
@@ -49,17 +50,54 @@ class PointMenu {
         this.element.style.display = "block";
     }
 
+    /**
+     * Opens the menu at a given coordinate
+     * @param {Point} pt
+     */
     openAtPoint(pt) {
         this.show();
-        let ptMenuLocation = this.getBestLayout(pt,
-            this.element.getBoundingClientRect(),
-            this.stemLength);
+        let rectMenu = this.element.getBoundingClientRect();
+        let ptMenuLocation = this.getBestLayout(pt, rectMenu, this.stemLength);
+        PointMenu.translate(this.element, ptMenuLocation);
 
-        this.coordinates = ptMenuLocation;
+        // Move the stem origin to the location
+        let ptDot = PointMenu.globalToLocal(pt, ptMenuLocation);
+        PointMenu.translate(this.dot, ptDot);
+
+        console.log("ptDot", ptDot);
+
+
+        var ptTerminal = new Point();
+        ptTerminal.x = (ptDot.x < 0) ? ptMenuLocation.x - this.stemLength : ptDot.x - this.stemLength;
+        ptTerminal.y = (ptDot.y < 0) ? ptMenuLocation.y : ptDot.y;
+
+        // if north or south orientation, x is equal to half the width of the
+
+        console.log("ptTerminal", PointMenu.globalToLocal(ptTerminal, ptDot));
+
+        // Draw the stem connecting the user's tap location to the menu
+    }
+
+    static translate(element, point) {
+        element.style.transform = `translate(${point.x}px, ${point.y}px)`;
     }
 
     /**
-     * Determines where the point menu should be rendered given the size of the menu and the origin of click
+     * Transforms a screen coordinate to a local coordinate
+     */
+    static globalToLocal(ptGlobal, ptLocal) {
+        let dx = ptGlobal.x - ptLocal.x;
+        let dy = ptGlobal.y - ptLocal.y;
+        return new Point(dx, dy);
+    }
+
+    /**
+     * Determines where the point menu should be rendered by optimizing for visible are of the rectangular shape
+     * 
+     * @param {Point} ptOrigin - the screen coordinates where the user tapped or clicked
+     * @param {Rectangle} boundingRect - the rectangular shape to be rendered
+     * @param {int} originOffset - the amount of padding to add between the menu and the interaction point
+     * @return {Point}
      */
     getBestLayout(ptOrigin, boundingRect, originOffset) {
         let rectLayouts = [];

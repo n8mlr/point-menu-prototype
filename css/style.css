@@ -55,3 +55,9 @@
     margin-top: -4px;
     position: absolute;
 }
+
+.stem {
+    border: 1px solid #fafcff;
+    width: 80px;
+    position: absolute;
+}
